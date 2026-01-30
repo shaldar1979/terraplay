@@ -1,5 +1,14 @@
 name: 'Terraform S3 Deployment'
+run: |
+    echo "TF_LOG=DEBUG" >> $GITHUB_ENV
+name: Print working directory
+run: pwd    
 
+name: Setup Terraform
+  uses: hashicorp/setup-terraform@v3
+  with:
+    terraform_version: 1.6.6
+    
 on:
   push:
     branches: [ "hal-feature-branch" ]
