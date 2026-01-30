@@ -1,4 +1,4 @@
-name: 'Terraform S3 Deployment'
+name: Terraform S3 Deployment (Debug)
 
 on:
   push:
@@ -10,44 +10,93 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  TF_LOG: DEBUG
+  TF_LOG_PATH: terraform-debug.log
+  AWS_REGION: us-east-1  
+
 jobs:
   terraform:
-    name: 'Terraform'
+    name: Terraform
     runs-on: ubuntu-latest
     
     steps:
+
+    # -----------------------
+    # Checkout
+    # -----------------------
     - name: Checkout
       uses: actions/checkout@v4
 
+    # -----------------------
+    # Basic Debug Info
+    # -----------------------
+    - name: Print directory structure
+      run: |
+        echo "Current directory:"
+        pwd
+        echo "Repository contents:"
+        ls -la
+        echo "Terraform files:"
+        find . -name "*.tf"
+
+    # -----------------------
+    # Setup Terraform
+    # -----------------------
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.6.6
+
+    - name: Terraform Version
+      run: terraform version
+
+    # -----------------------
+    # AWS Credentials
+    # -----------------------
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        role-session-name: github-terraform-session
         aws-region: us-east-1
 
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: 1.5.0
+    - name: Verify AWS Identity
+      run: |
+        aws sts get-caller-identity
+        aws s3 ls || true
 
-    - name: Terraform Format
-      id: fmt
-      run: terraform fmt -check
-
+    # -----------------------
+    # Terraform Init
+    # -----------------------
     - name: Terraform Init
-      id: init
-      run: terraform init
+      run: terraform init -reconfigure
 
+    # -----------------------
+    # Terraform Validate
+    # -----------------------
     - name: Terraform Validate
-      id: validate
-      run: terraform validate -no-color
+      run: terraform validate
 
+    # -----------------------
+    # Terraform Plan
+    # -----------------------
     - name: Terraform Plan
-      id: plan
-      if: github.event_name == 'pull_request'
-      run: terraform plan -no-color -input=false -var="bucket_name=${{ secrets.BUCKET_NAME }}"
-      continue-on-error: true
+      run: terraform plan -input=false -var="bucket_name=${{ secrets.BUCKET_NAME }}"
 
+    # -----------------------
+    # Terraform Apply (for hal-feature-branch)
+    # -----------------------
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      if: github.ref == 'refs/heads/hal-feature-branch' && github.event_name == 'push'
       run: terraform apply -auto-approve -input=false -var="bucket_name=${{ secrets.BUCKET_NAME }}"
+
+    # -----------------------
+    # Upload Debug Log
+    # -----------------------
+    - name: Upload Terraform Debug Log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: terraform-debug-log
+        path: terraform-debug.log
