@@ -71,6 +71,7 @@ jobs:
     # -----------------------
     - name: Terraform Init
       run: terraform init -reconfigure
+      working-directory: terraform
 
     # -----------------------
     # Terraform Validate
