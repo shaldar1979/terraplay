@@ -78,12 +78,14 @@ jobs:
     # -----------------------
     - name: Terraform Validate
       run: terraform validate
+      working-directory: terraform      
 
     # -----------------------
     # Terraform Plan
     # -----------------------
     - name: Terraform Plan
       run: terraform plan -input=false -var="bucket_name=${{ secrets.BUCKET_NAME }}"
+      working-directory: terraform      
 
     # -----------------------
     # Terraform Apply (for hal-feature-branch-modularize)
@@ -91,7 +93,8 @@ jobs:
     - name: Terraform Apply
       if: github.ref == 'refs/heads/hal-feature-branch-modularize' && github.event_name == 'push'
       run: terraform apply -auto-approve -input=false -var="bucket_name=${{ secrets.BUCKET_NAME }}"
-
+      working-directory: terraform
+      
     # -----------------------
     # Upload Debug Log
     # -----------------------
