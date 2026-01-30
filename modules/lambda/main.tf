@@ -32,7 +32,8 @@ resource "aws_lambda_function" "this" {
   runtime       = "python3.11"
 
   filename         = var.lambda_zip_path
-  source_code_hash = filebase64sha256(var.lambda_zip_path)
+  source_code_hash = var.source_code_hash
+
 
   timeout = 60
 }

@@ -13,8 +13,8 @@ module "app_bucket" {
 
 data "archive_file" "lambda_zip" {
   type        = "zip"
-  source_dir  = "${path.module}/../lambda-code"
-  output_path = "${path.module}/lambda_function.zip"
+  source_dir  = "${path.root}/../lambda-code"
+  output_path = "${path.root}/lambda_function.zip"
 }
 
 module "sqs_queue" {
@@ -25,7 +25,8 @@ module "sqs_queue" {
 module "lambda_function" {
   source = "../modules/lambda"
 
-  function_name   = "demo-lambda"
-  lambda_zip_path = "${path.module}/lambda_function.zip"
-  sqs_queue_arn   = module.sqs_queue.queue_arn
+  function_name    = var.lambda_name
+  lambda_zip_path  = data.archive_file.lambda_zip.output_path
+  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+  sqs_queue_arn    = module.sqs_queue.queue_arn
 }
