@@ -15,3 +15,9 @@ variable "sqs_name" {
   type        = string
   default     = "demo-sqs-queue"
 }
+
+variable "bucket_name" {
+  description = "Base name of the S3 bucket"
+  type        = string
+  default     = "app-bucket"
+}
