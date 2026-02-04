@@ -1,32 +1,3 @@
-locals {
-  lambda_env_vars = {
-    env1 = {
-      APP_MODE = "environment_one"
-    }
-    env2 = {
-      APP_MODE = "environment_two"
-    }
-  }
-
-  dag_variables = {
-    env1 = {
-      api_url  = "https://api.env1.example.com"
-      db_name  = "env1_database"
-    }
-    env2 = {
-      api_url  = "https://api.env2.example.com"
-      db_name  = "env2_database"
-    }
-  }
-  
-  cidr_block = {
-    env1 = "10.10.0.0/16"
-    env2 = "10.20.0.0/16"
-  }
-
-}
-
-
 data "aws_caller_identity" "current" {}
 
 module "app_bucket" {
@@ -62,22 +33,6 @@ module "lambda_function" {
 
   environment_variables = local.lambda_env_vars[var.environment]
 }
-
-data "template_file" "dag_template" {
-  template = file("${path.module}/../dags/sample_dag.py.tpl")
-
-  vars = local.dag_variables[var.environment]
-}
-
-
-module "mwaa" {
-  source = "../modules/mwaa"
-
-  environment_name   = "mwaa-${var.environment}"
-  vpc_id             = var.vpc_id
-  private_subnet_ids = var.private_subnet_ids
-}
-
 
 
 resource "aws_vpc" "this" {
