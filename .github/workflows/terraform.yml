@@ -121,6 +121,10 @@ jobs:
           echo "No existing mapping found"
         fi
 
+    - name: Remove event source mapping from state (if stale)
+      run: |
+        terraform state rm module.lambda_function.aws_lambda_event_source_mapping.sqs_trigger || true
+      working-directory: terraform
 
 
 
