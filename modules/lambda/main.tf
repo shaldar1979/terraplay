@@ -36,6 +36,10 @@ resource "aws_lambda_function" "this" {
 
 
   timeout = 60
+
+  environment {
+    variables = var.environment_variables
+  }
 }
 
 resource "aws_lambda_event_source_mapping" "sqs_trigger" {

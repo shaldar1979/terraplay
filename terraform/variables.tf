@@ -21,3 +21,8 @@ variable "bucket_name" {
   type        = string
   default     = "app-bucket"
 }
+
+variable "environment" {
+  description = "Deployment environment (env1 or env2)"
+  type        = string
+}

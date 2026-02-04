@@ -13,3 +13,9 @@ variable "source_code_hash" {
 variable "sqs_queue_arn" {
   type = string
 }
+
+variable "environment_variables" {
+  description = "Environment variables for Lambda"
+  type        = map(string)
+  default     = {}
+}

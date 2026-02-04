@@ -1,3 +1,15 @@
+locals {
+  lambda_env_vars = {
+    env1 = {
+      APP_MODE = "environment_one"
+    }
+    env2 = {
+      APP_MODE = "environment_two"
+    }
+  }
+}
+
+
 data "aws_caller_identity" "current" {}
 
 module "app_bucket" {
@@ -25,8 +37,10 @@ module "sqs_queue" {
 module "lambda_function" {
   source = "../modules/lambda"
 
-  function_name    = var.lambda_name
+  function_name    = "demo-lambda-${var.environment}"
   lambda_zip_path  = data.archive_file.lambda_zip.output_path
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
   sqs_queue_arn    = module.sqs_queue.queue_arn
+
+  environment_variables = local.lambda_env_vars[var.environment]
 }

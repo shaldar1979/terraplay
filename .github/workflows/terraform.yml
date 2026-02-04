@@ -2,17 +2,16 @@ name: Terraform S3 Deployment (Debug)
 
 on:
   push:
-    branches: [ "hal-feature-branch-modularize" ]
-  pull_request:
-    branches: [ "hal-feature-branch-modularize" ]
+    branches:
+      - env1
+      - env2
+  workflow_dispatch:
 
 permissions:
   id-token: write
   contents: read
 
 env:
-  TF_LOG: DEBUG
-  TF_LOG_PATH: terraform-debug.log
   AWS_REGION: us-east-1  
 
 jobs:
@@ -20,6 +19,10 @@ jobs:
     name: Terraform
     runs-on: ubuntu-latest
     
+
+
+    env:
+      AWS_REGION: us-east-1
     steps:
 
     # -----------------------
@@ -61,6 +64,12 @@ jobs:
         role-session-name: github-terraform-session
         aws-region: us-east-1
 
+    # Determine environment from branch
+    - name: Set environment variable
+      run: |
+        echo "ENVIRONMENT=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
+
     - name: Verify AWS Identity
       run: |
         aws sts get-caller-identity
@@ -84,15 +93,15 @@ jobs:
     # Terraform Plan
     # -----------------------
     - name: Terraform Plan
-      run: terraform plan -input=false -var="bucket_name=${{ secrets.BUCKET_NAME }}"
-      working-directory: terraform      
+      run: terraform plan -var="environment=${{ env.ENVIRONMENT }}"
+      working-directory: terraform
 
     # -----------------------
     # Terraform Apply (for hal-feature-branch-modularize)
     # -----------------------
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/hal-feature-branch-modularize' && github.event_name == 'push'
-      run: terraform apply -auto-approve -input=false -var="bucket_name=${{ secrets.BUCKET_NAME }}"
+      if: github.ref == 'refs/heads/env1' || github.ref == 'refs/heads/env2'
+      run: terraform apply -auto-approve -var="environment=${{ env.ENVIRONMENT }}"
       working-directory: terraform
       
     # -----------------------
