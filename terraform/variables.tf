@@ -1,8 +1,23 @@
 variable "aws_region" {
-  type    = string
-  default = "us-east-1"
+  description = "AWS region"
+  type        = string
+  default     = "us-east-1"
+}
+
+variable "lambda_name" {
+  description = "Lambda function name"
+  type        = string
+  default     = "demo-lambda"
+}
+
+variable "sqs_name" {
+  description = "SQS queue name"
+  type        = string
+  default     = "demo-sqs-queue"
 }
 
 variable "bucket_name" {
-  type = string
+  description = "Base name of the S3 bucket"
+  type        = string
+  default     = "app-bucket"
 }

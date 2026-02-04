@@ -2,9 +2,9 @@ name: Terraform S3 Deployment (Debug)
 
 on:
   push:
-    branches: [ "hal-feature-branch" ]
+    branches: [ "hal-feature-branch-modularize" ]
   pull_request:
-    branches: [ "hal-feature-branch" ]
+    branches: [ "hal-feature-branch-modularize" ]
 
 permissions:
   id-token: write
@@ -71,26 +71,30 @@ jobs:
     # -----------------------
     - name: Terraform Init
       run: terraform init -reconfigure
+      working-directory: terraform
 
     # -----------------------
     # Terraform Validate
     # -----------------------
     - name: Terraform Validate
       run: terraform validate
+      working-directory: terraform      
 
     # -----------------------
     # Terraform Plan
     # -----------------------
     - name: Terraform Plan
       run: terraform plan -input=false -var="bucket_name=${{ secrets.BUCKET_NAME }}"
+      working-directory: terraform      
 
     # -----------------------
-    # Terraform Apply (for hal-feature-branch)
+    # Terraform Apply (for hal-feature-branch-modularize)
     # -----------------------
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/hal-feature-branch' && github.event_name == 'push'
+      if: github.ref == 'refs/heads/hal-feature-branch-modularize' && github.event_name == 'push'
       run: terraform apply -auto-approve -input=false -var="bucket_name=${{ secrets.BUCKET_NAME }}"
-
+      working-directory: terraform
+      
     # -----------------------
     # Upload Debug Log
     # -----------------------
