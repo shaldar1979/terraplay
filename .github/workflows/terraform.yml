@@ -1,4 +1,4 @@
-name: Terraform S3 Deployment (Debug)
+name: Terraform Deployment (Debug)
 
 on:
   push:
