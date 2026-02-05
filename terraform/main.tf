@@ -20,9 +20,10 @@ data "archive_file" "lambda_zip" {
 
 data "archive_file" "api_lambda_zip" {
   type        = "zip"
-  source_file = "${path.root}/lambda-code/api_lambda.py"
+  source_file = "${path.root}/../lambda-code/api_lambda.py"
   output_path = "${path.root}/api_lambda.zip"
 }
+
 
 
 module "sqs_queue" {
