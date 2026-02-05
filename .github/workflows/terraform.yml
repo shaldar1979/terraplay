@@ -126,6 +126,9 @@ jobs:
     #     terraform state rm module.lambda_function.aws_lambda_event_source_mapping.sqs_trigger || true
     #   working-directory: terraform
 
+    - name: Remove SNS topic from state (if stale)
+      run: terraform state rm aws_sns_topic.this || true
+      working-directory: terraform
 
 
     # -----------------------
