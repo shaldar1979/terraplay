@@ -40,19 +40,15 @@ locals {
   email_address = "shouvanik.haldar@accenture.com"
 }
 
-resource "aws_sns_topic" "env_topics" {
-  for_each = toset(local.environments)
-
-  name = "demo-sns-${each.key}"
+resource "aws_sns_topic" "this" {
+  name = "demo-sns-${var.environment}"
 }
 
 
-resource "aws_sns_topic_subscription" "email_subscriptions" {
-  for_each = aws_sns_topic.env_topics
-
-  topic_arn = each.value.arn
+resource "aws_sns_topic_subscription" "email" {
+  topic_arn = aws_sns_topic.this.arn
   protocol  = "email"
-  endpoint  = local.email_address
+  endpoint  = "shouvanik.haldar@accenture.com"
 }
 
 output "sns_topic_arns" {
