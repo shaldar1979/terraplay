@@ -18,6 +18,13 @@ data "archive_file" "lambda_zip" {
   output_path = "${path.root}/lambda_function.zip"
 }
 
+data "archive_file" "api_lambda_zip" {
+  type        = "zip"
+  source_file = "${path.root}/lambda-code/api_lambda.py"
+  output_path = "${path.root}/api_lambda.zip"
+}
+
+
 module "sqs_queue" {
   source     = "../modules/sqs"
   queue_name = "demo-sqs-queue"
@@ -79,7 +86,7 @@ resource "aws_iam_role_policy_attachment" "api_lambda_basic" {
 resource "aws_lambda_function" "api_lambda" {
   function_name = "api-lambda-${var.environment}"
   role          = aws_iam_role.api_lambda_role.arn
-  handler       = "app.lambda_handler"
+  handler       = "api_lambda.lambda_handler"
   runtime       = "python3.11"
 
   filename         = data.archive_file.api_lambda_zip.output_path
