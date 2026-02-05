@@ -1,0 +1,147 @@
+name: Terraform Deployment (Debug)
+
+on:
+  push:
+    branches:
+      - env1
+      - env2
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+
+
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: true
+
+
+
+env:
+  AWS_REGION: us-east-1  
+
+jobs:
+  terraform:
+    name: Terraform
+    runs-on: ubuntu-latest
+    
+
+
+    env:
+      AWS_REGION: us-east-1
+    steps:
+
+    # -----------------------
+    # Checkout
+    # -----------------------
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # -----------------------
+    # Basic Debug Info
+    # -----------------------
+    - name: Print directory structure
+      run: |
+        echo "Current directory:"
+        pwd
+        echo "Repository contents:"
+        ls -la
+        echo "Terraform files:"
+        find . -name "*.tf"
+
+    # -----------------------
+    # Setup Terraform
+    # -----------------------
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.6.6
+
+    - name: Terraform Version
+      run: terraform version
+
+    # -----------------------
+    # AWS Credentials
+    # -----------------------
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        role-session-name: github-terraform-session
+        aws-region: us-east-1
+
+    # Determine environment from branch
+    - name: Set environment variable
+      run: |
+        echo "ENVIRONMENT=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
+
+    - name: Verify AWS Identity
+      run: |
+        aws sts get-caller-identity
+        aws s3 ls || true
+
+    # -----------------------
+    # Terraform Init
+    # -----------------------
+    - name: Terraform Init
+      run: |
+        terraform init \
+          -backend-config="key=lambda/${{ env.ENVIRONMENT }}/terraform.tfstate"
+      working-directory: terraform
+
+    # -----------------------
+    # Terraform Validate
+    # -----------------------
+    - name: Terraform Validate
+      run: terraform validate
+      working-directory: terraform      
+
+    # -----------------------
+    # Terraform Plan
+    # -----------------------
+    - name: Terraform Plan
+      run: terraform plan -var="environment=${{ env.ENVIRONMENT }}"
+      working-directory: terraform
+
+    - name: Remove existing event source mapping if exists
+      run: |
+        UUID=$(aws lambda list-event-source-mappings \
+          --function-name demo-lambda-${{ env.ENVIRONMENT }} \
+          --query "EventSourceMappings[?EventSourceArn=='arn:aws:sqs:us-east-1:117134819170:demo-sqs-queue'].UUID" \
+          --output text)
+
+        if [ "$UUID" != "None" ] && [ -n "$UUID" ]; then
+          echo "Deleting existing mapping $UUID"
+          aws lambda delete-event-source-mapping --uuid $UUID
+          sleep 10
+        else
+          echo "No existing mapping found"
+        fi
+
+    # - name: Remove event source mapping from state (if stale)
+    #   run: |
+    #     terraform state rm module.lambda_function.aws_lambda_event_source_mapping.sqs_trigger || true
+    #   working-directory: terraform
+
+
+
+    # -----------------------
+    # Terraform Apply (for hal-feature-branch-modularize)
+    # -----------------------
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/env1' || github.ref == 'refs/heads/env2'
+      run: terraform apply -auto-approve -var="environment=${{ env.ENVIRONMENT }}"
+      working-directory: terraform
+      
+    # -----------------------
+    # Upload Debug Log
+    # -----------------------
+    - name: Upload Terraform Debug Log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: terraform-debug-log
+        path: terraform-debug.log
