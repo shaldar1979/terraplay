@@ -51,9 +51,7 @@ resource "aws_sns_topic_subscription" "email" {
   endpoint  = "shouvanik.haldar@accenture.com"
 }
 
-output "sns_topic_arns" {
-  value = {
-    for env, topic in aws_sns_topic.env_topics :
-    env => topic.arn
-  }
+output "sns_topic_arn" {
+  value = aws_sns_topic.this.arn
 }
+
