@@ -34,11 +34,6 @@ module "lambda_function" {
   environment_variables = local.lambda_env_vars[var.environment]
 }
 
-
-provider "aws" {
-  region = var.aws_region
-}
-
 locals {
   environments = ["env1", "env2"]
 
